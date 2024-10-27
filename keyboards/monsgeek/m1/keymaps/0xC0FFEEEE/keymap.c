@@ -16,6 +16,17 @@
 
 #include QMK_KEYBOARD_H
 
+
+#define KC_TASK LGUI(KC_TAB)
+#define KC_FLXP LGUI(KC_E)
+#define KC_CTSH C_S_T(KC_CAPS)
+
+
+enum custom_keycodes {
+  M_JIGL = SAFE_RANGE
+};
+
+
 enum __layers {
     WIN_B,
     WIN_W,
@@ -25,9 +36,6 @@ enum __layers {
     MAC_FN
 };
 
-#define KC_TASK LGUI(KC_TAB)
-#define KC_FLXP LGUI(KC_E)
-#define KC_CTSH C_S_T(KC_CAPS)
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -38,15 +46,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,KC_RBRC,  KC_BSLS,          KC_PGUP,
         KC_CTSH, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,KC_NUHS,  KC_ENT,           KC_PGDN,
         KC_LSFT, KC_NUBS, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          KC_RSFT, KC_UP,   KC_END,
-        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(WIN_FN),KC_RCTL,        KC_LEFT, KC_DOWN, KC_RGHT),
+        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(WIN_W),KC_RCTL,        KC_LEFT, KC_DOWN, KC_RGHT),
 
     [WIN_W] = LAYOUT_all( /* Base */
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, M_JIGL,  _______,          _______,
         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, KC_PSCR, _______, _______, _______,          _______,
         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
-        _______, _______, KC_UP,   _______, _______, _______, _______, _______, _______, _______, KC_PSCR, _______, _______, _______,          _______,
-        _______, KC_LEFT, KC_DOWN, KC_RGHT, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______,
-        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______, KC_W,    _______,
-        _______, _______, _______,                   _______,                            _______,MO(WIN_FN),_______,          KC_A,    KC_S,    KC_D),
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______,
+        _______, _______, _______,                   _______,                            _______,MO(WIN_W),_______,          _______, _______, _______),
 
     [WIN_FN] = LAYOUT_all( /* WASD/↑←↓→ */
         _______, KC_MYCM, KC_MAIL, KC_WSCH, KC_WHOM, KC_MSEL, KC_MPLY, KC_MPRV, KC_MNXT, _______, _______, _______, _______, _______,           RGB_MOD,
@@ -94,3 +102,33 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 };
 #endif
 
+bool is_mouse_jiggle_active = false;
+bool mouse_jiggle_direction = false; // used to alternate direction
+uint16_t mouse_jiggle_frequency = 1000; // how often to move the mouse (1 seconds)
+uint16_t mouse_jiggle_timer = 0;
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+      case M_JIGL:
+          if (record->event.pressed) {
+              is_mouse_jiggle_active = !is_mouse_jiggle_active;
+          }
+          break;
+    }
+
+    return true;
+}
+
+void matrix_scan_user(void) {
+    if (is_mouse_jiggle_active) {
+        if (timer_elapsed(mouse_jiggle_timer) > mouse_jiggle_frequency) {
+            mouse_jiggle_timer = timer_read();
+            if (mouse_jiggle_direction) {
+                tap_code(KC_MS_LEFT);
+            } else {
+                tap_code(KC_MS_RIGHT);
+            }
+            mouse_jiggle_direction = !mouse_jiggle_direction;
+        }
+    }
+}
