@@ -133,7 +133,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 return 16;  // Call the callback every 16 ms.
             }
 
-        token = defer_exec(1, jiggler_callback, NULL);  // Schedule callback.
+            token = defer_exec(1, jiggler_callback, NULL);  // Schedule callback.
         }
     }
 
